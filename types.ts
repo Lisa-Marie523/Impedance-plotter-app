@@ -1,3 +1,4 @@
+
 export interface DataPoint {
   freq: number;
   real: number;
@@ -30,6 +31,9 @@ export interface ChartSettings {
   plotMode: PlotMode;
   lineWidth: number;
   symbolSize: number;
+  // Filtering
+  minFrequency: number | undefined;
+  maxFrequency: number | undefined;
 }
 
 export interface CsvParseResult {

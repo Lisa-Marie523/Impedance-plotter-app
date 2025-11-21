@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
+
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import Sidebar from './components/Sidebar';
 import NyquistChart from './components/NyquistChart';
 import { ImpedanceDataset, ChartSettings } from './types';
@@ -19,7 +20,9 @@ const DEFAULT_SETTINGS: ChartSettings = {
   yAxisLabel: "-Imag(Z) [Ω]",
   plotMode: 'both',
   lineWidth: 2,
-  symbolSize: 3
+  symbolSize: 3,
+  minFrequency: undefined,
+  maxFrequency: undefined
 };
 
 const App: React.FC = () => {
@@ -69,6 +72,21 @@ const App: React.FC = () => {
       }
     }
   }, [datasets, settings]);
+
+  // Filter logic
+  const filteredDatasets = useMemo(() => {
+    if (settings.minFrequency === undefined && settings.maxFrequency === undefined) {
+      return datasets;
+    }
+    return datasets.map(ds => ({
+      ...ds,
+      data: ds.data.filter(point => {
+        const meetsMin = settings.minFrequency === undefined || point.freq >= settings.minFrequency;
+        const meetsMax = settings.maxFrequency === undefined || point.freq <= settings.maxFrequency;
+        return meetsMin && meetsMax;
+      })
+    }));
+  }, [datasets, settings.minFrequency, settings.maxFrequency]);
 
   // Handle File Uploads
   const handleUploadFiles = useCallback(async (files: FileList) => {
@@ -183,7 +201,7 @@ const App: React.FC = () => {
   return (
     <div className="flex w-screen h-screen overflow-hidden bg-gray-50">
       <Sidebar 
-        datasets={datasets}
+        datasets={filteredDatasets}
         settings={settings}
         onUploadFiles={handleUploadFiles}
         onUpdateDataset={updateDataset}
@@ -213,7 +231,7 @@ const App: React.FC = () => {
         <div className="flex-1 p-6">
           <div className="bg-white rounded-xl border border-gray-200 shadow-lg w-full h-full overflow-hidden relative">
             <NyquistChart 
-              datasets={datasets} 
+              datasets={filteredDatasets} 
               settings={settings} 
               onUpdateDataset={updateDataset} 
             />

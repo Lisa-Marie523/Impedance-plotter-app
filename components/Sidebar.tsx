@@ -1,6 +1,7 @@
+
 import React, { useRef } from 'react';
 import { ImpedanceDataset, ChartSettings, PlotMode } from '../types';
-import { Upload, FolderOpen, Download, FileUp, Trash2, Wand2, RefreshCw, Type, CheckSquare, Square, PaintBucket, Activity } from 'lucide-react';
+import { Upload, FolderOpen, Download, FileUp, Trash2, Wand2, RefreshCw, Type, CheckSquare, Square, PaintBucket, Activity, Filter } from 'lucide-react';
 
 interface SidebarProps {
   datasets: ImpedanceDataset[];
@@ -171,6 +172,39 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </div>
               ))
             )}
+          </div>
+        </section>
+
+        {/* Filter Settings */}
+        <section>
+          <h3 className="text-slate-500 font-semibold uppercase text-xs mb-3 tracking-wider">Data Filtering</h3>
+          <div className="space-y-2 bg-gray-50 border border-gray-200 p-3 rounded">
+            <div className="flex items-center gap-2 text-slate-600 text-xs mb-1">
+              <Filter size={14} />
+              <span className="font-bold">Frequency Range (Hz)</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-[10px] text-slate-500 mb-0.5 font-medium">Min Freq</label>
+                <input 
+                  type="number" 
+                  value={settings.minFrequency ?? ''} 
+                  onChange={(e) => onUpdateSettings({ minFrequency: e.target.value ? parseFloat(e.target.value) : undefined })}
+                  placeholder="0"
+                  className="w-full bg-white border border-gray-300 rounded px-2 py-1.5 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none text-slate-700"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-500 mb-0.5 font-medium">Max Freq</label>
+                <input 
+                  type="number" 
+                  value={settings.maxFrequency ?? ''} 
+                  onChange={(e) => onUpdateSettings({ maxFrequency: e.target.value ? parseFloat(e.target.value) : undefined })}
+                  placeholder="Max"
+                  className="w-full bg-white border border-gray-300 rounded px-2 py-1.5 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none text-slate-700"
+                />
+              </div>
+            </div>
           </div>
         </section>
 
