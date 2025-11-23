@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import Sidebar from './components/Sidebar';
 import NyquistChart from './components/NyquistChart';
@@ -142,11 +141,10 @@ const App: React.FC = () => {
     setDatasets(prev => prev.filter(ds => ds.id !== id));
   };
 
-  const removeAllDatasets = () => {
-    if (datasets.length > 0 && window.confirm("Are you sure you want to remove all loaded datasets? This cannot be undone.")) {
-      setDatasets([]);
-    }
-  };
+  const removeAllDatasets = useCallback(() => {
+    // Confirmation is now handled in Sidebar UI
+    setDatasets([]);
+  }, []);
 
   const autoColor = () => {
     setDatasets(prev => prev.map((ds, idx) => ({

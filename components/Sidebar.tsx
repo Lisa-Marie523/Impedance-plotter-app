@@ -1,5 +1,4 @@
-
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { ImpedanceDataset, ChartSettings, PlotMode } from '../types';
 import { Upload, FolderOpen, Download, FileUp, Trash2, Wand2, RefreshCw, Type, CheckSquare, Square, PaintBucket, Activity, Filter } from 'lucide-react';
 
@@ -35,6 +34,20 @@ const Sidebar: React.FC<SidebarProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
   const settingsInputRef = useRef<HTMLInputElement>(null);
+  
+  // Local state for the clear button confirmation
+  const [isConfirmingClear, setIsConfirmingClear] = useState(false);
+
+  const handleClearClick = () => {
+    if (isConfirmingClear) {
+      onRemoveAllDatasets();
+      setIsConfirmingClear(false);
+    } else {
+      setIsConfirmingClear(true);
+      // Reset confirmation state after 3 seconds if not clicked again
+      setTimeout(() => setIsConfirmingClear(false), 3000);
+    }
+  };
 
   return (
     <div className="w-80 h-screen bg-white border-r border-gray-200 flex flex-col text-sm overflow-hidden flex-shrink-0 shadow-sm z-10">
@@ -53,6 +66,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           
           <div className="grid grid-cols-2 gap-2 mb-2">
             <button 
+              type="button"
               onClick={() => fileInputRef.current?.click()}
               className="flex flex-col items-center justify-center p-3 bg-white hover:bg-gray-50 rounded-md transition-colors border border-dashed border-gray-300 hover:border-blue-400 text-slate-700 group"
             >
@@ -60,6 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               <span className="text-xs font-medium">CSV Files</span>
             </button>
             <button 
+              type="button"
               onClick={() => folderInputRef.current?.click()}
               className="flex flex-col items-center justify-center p-3 bg-white hover:bg-gray-50 rounded-md transition-colors border border-dashed border-gray-300 hover:border-amber-400 text-slate-700 group"
             >
@@ -98,13 +113,19 @@ const Sidebar: React.FC<SidebarProps> = ({
             {datasets.length > 0 && (
                <div className="flex gap-2">
                  <button 
-                  onClick={onRemoveAllDatasets}
-                  className="text-xs flex items-center gap-1 text-slate-400 hover:text-red-600 transition-colors border border-transparent hover:border-red-100 rounded px-1"
-                  title="Remove all datasets"
+                  type="button"
+                  onClick={handleClearClick}
+                  className={`text-xs flex items-center gap-1 transition-all border rounded px-1.5 py-0.5 ${
+                    isConfirmingClear 
+                      ? "bg-red-100 text-red-700 border-red-200 font-bold animate-pulse" 
+                      : "text-slate-400 hover:text-red-600 border-transparent hover:border-red-100"
+                  }`}
+                  title={isConfirmingClear ? "Click again to confirm" : "Remove all datasets"}
                 >
-                  <Trash2 size={12} /> Clear
+                  <Trash2 size={12} /> {isConfirmingClear ? "Sure?" : "Clear"}
                 </button>
                  <button 
+                  type="button"
                   onClick={onMakeAllBlack}
                   className="text-xs flex items-center gap-1 text-slate-500 hover:text-slate-900 transition-colors border border-transparent hover:border-gray-200 rounded px-1"
                   title="Set all to black"
@@ -112,6 +133,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <PaintBucket size={12} /> Black
                 </button>
                  <button 
+                  type="button"
                   onClick={onAutoColor}
                   className="text-xs flex items-center gap-1 text-scientific-accent hover:text-blue-700 transition-colors border border-transparent hover:border-gray-200 rounded px-1"
                   title="Auto-color all datasets"
@@ -125,12 +147,14 @@ const Sidebar: React.FC<SidebarProps> = ({
           {datasets.length > 0 && (
             <div className="flex gap-2 mb-2 text-xs">
               <button 
+                type="button"
                 onClick={() => onUpdateAllDatasets(true)}
                 className="flex-1 bg-gray-100 hover:bg-gray-200 text-slate-600 py-1 rounded flex items-center justify-center gap-1 border border-gray-200 transition-colors"
               >
                 <CheckSquare size={12} /> All
               </button>
               <button 
+                type="button"
                 onClick={() => onUpdateAllDatasets(false)}
                 className="flex-1 bg-gray-100 hover:bg-gray-200 text-slate-600 py-1 rounded flex items-center justify-center gap-1 border border-gray-200 transition-colors"
               >
@@ -173,6 +197,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   />
                   
                   <button 
+                    type="button"
                     onClick={() => onRemoveDataset(ds.id)}
                     className="text-slate-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 p-1"
                   >
@@ -233,6 +258,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                <div className="grid grid-cols-3 gap-1 mb-2">
                  {(['both', 'line', 'scatter'] as PlotMode[]).map(mode => (
                    <button
+                    type="button"
                     key={mode}
                     onClick={() => onUpdateSettings({ plotMode: mode })}
                     className={`text-[10px] py-1.5 rounded capitalize border transition-all font-medium ${settings.plotMode === mode ? 'bg-white border-blue-500 text-blue-600 shadow-sm' : 'bg-gray-100 border-transparent text-slate-500 hover:bg-gray-200'}`}
@@ -372,12 +398,14 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="p-4 border-t border-gray-200 bg-gray-50 space-y-2">
         <div className="flex gap-2">
           <button 
+            type="button"
             onClick={onExportSettings}
             className="flex-1 bg-white hover:bg-gray-100 border border-gray-300 text-slate-600 py-2 rounded text-xs flex items-center justify-center gap-2 transition-colors shadow-sm"
           >
             <Download size={14} /> Export
           </button>
           <button 
+            type="button"
             onClick={() => settingsInputRef.current?.click()}
             className="flex-1 bg-white hover:bg-gray-100 border border-gray-300 text-slate-600 py-2 rounded text-xs flex items-center justify-center gap-2 transition-colors shadow-sm"
           >
@@ -392,6 +420,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           />
         </div>
         <button 
+          type="button"
           onClick={() => window.location.reload()}
           className="w-full text-slate-400 hover:text-slate-600 py-1 text-[10px] flex items-center justify-center gap-1 transition-colors"
         >

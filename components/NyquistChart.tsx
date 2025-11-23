@@ -137,7 +137,10 @@ const NyquistChart: React.FC<NyquistChartProps> = ({ datasets, settings, onUpdat
     dragStartRef.current = {
       x: e.clientX,
       y: e.clientY,
-      domains: { x: [...domains.x], y: [...domains.y] }
+      domains: { 
+        x: [domains.x[0], domains.x[1]] as [number, number], 
+        y: [domains.y[0], domains.y[1]] as [number, number] 
+      }
     };
   };
 
@@ -158,8 +161,8 @@ const NyquistChart: React.FC<NyquistChartProps> = ({ datasets, settings, onUpdat
     const yShift = -dy * yScale; // Inverted because screen Y is opposite to Cartesian Y
 
     setUserDomains({
-      x: [startDomains.x[0] - xShift, startDomains.x[1] - xShift],
-      y: [startDomains.y[0] - yShift, startDomains.y[1] - yShift]
+      x: [startDomains.x[0] - xShift, startDomains.x[1] - xShift] as [number, number],
+      y: [startDomains.y[0] - yShift, startDomains.y[1] - yShift] as [number, number]
     });
   };
 
