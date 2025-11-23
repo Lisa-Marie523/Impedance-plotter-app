@@ -142,6 +142,12 @@ const App: React.FC = () => {
     setDatasets(prev => prev.filter(ds => ds.id !== id));
   };
 
+  const removeAllDatasets = () => {
+    if (datasets.length > 0 && window.confirm("Are you sure you want to remove all loaded datasets? This cannot be undone.")) {
+      setDatasets([]);
+    }
+  };
+
   const autoColor = () => {
     setDatasets(prev => prev.map((ds, idx) => ({
       ...ds,
@@ -207,6 +213,7 @@ const App: React.FC = () => {
         onUpdateDataset={updateDataset}
         onUpdateAllDatasets={updateAllDatasets}
         onRemoveDataset={removeDataset}
+        onRemoveAllDatasets={removeAllDatasets}
         onUpdateSettings={(s) => setSettings(prev => ({ ...prev, ...s }))}
         onAutoColor={autoColor}
         onMakeAllBlack={makeAllBlack}

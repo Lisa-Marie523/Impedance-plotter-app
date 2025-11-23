@@ -10,6 +10,7 @@ interface SidebarProps {
   onUpdateDataset: (id: string, updates: Partial<ImpedanceDataset>) => void;
   onUpdateAllDatasets: (visible: boolean) => void;
   onRemoveDataset: (id: string) => void;
+  onRemoveAllDatasets: () => void;
   onUpdateSettings: (updates: Partial<ChartSettings>) => void;
   onAutoColor: () => void;
   onMakeAllBlack: () => void;
@@ -24,6 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onUpdateDataset,
   onUpdateAllDatasets,
   onRemoveDataset,
+  onRemoveAllDatasets,
   onUpdateSettings,
   onAutoColor,
   onMakeAllBlack,
@@ -95,6 +97,13 @@ const Sidebar: React.FC<SidebarProps> = ({
             <h3 className="text-slate-500 font-semibold uppercase text-xs tracking-wider">Datasets ({datasets.length})</h3>
             {datasets.length > 0 && (
                <div className="flex gap-2">
+                 <button 
+                  onClick={onRemoveAllDatasets}
+                  className="text-xs flex items-center gap-1 text-slate-400 hover:text-red-600 transition-colors border border-transparent hover:border-red-100 rounded px-1"
+                  title="Remove all datasets"
+                >
+                  <Trash2 size={12} /> Clear
+                </button>
                  <button 
                   onClick={onMakeAllBlack}
                   className="text-xs flex items-center gap-1 text-slate-500 hover:text-slate-900 transition-colors border border-transparent hover:border-gray-200 rounded px-1"
