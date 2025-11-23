@@ -1,7 +1,8 @@
+
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { ImpedanceDataset, ChartSettings } from '../types';
-import { ZoomIn, ZoomOut, RotateCcw, Move } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCcw, Move, Image as ImageIcon, FileCode } from 'lucide-react';
 
 interface NyquistChartProps {
   datasets: ImpedanceDataset[];
@@ -171,6 +172,61 @@ const NyquistChart: React.FC<NyquistChartProps> = ({ datasets, settings, onUpdat
     setUserDomains(null);
   };
 
+  // --- Image Export ---
+  const downloadChart = (format: 'png' | 'svg') => {
+    if (!containerRef.current) return;
+    
+    const svg = containerRef.current.querySelector('svg');
+    if (!svg) return;
+
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const filename = (settings.chartTitle || 'nyquist_plot').replace(/\s+/g, '_').toLowerCase();
+
+    if (format === 'svg') {
+      const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${filename}.svg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } else {
+      // PNG
+      const canvas = document.createElement('canvas');
+      const rect = svg.getBoundingClientRect();
+      // 2x Scale for high resolution
+      const scale = 2; 
+      canvas.width = rect.width * scale;
+      canvas.height = rect.height * scale;
+      
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      
+      const img = new Image();
+      const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      
+      img.onload = () => {
+        // Draw white background (transparent by default in SVG)
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        const link = document.createElement('a');
+        link.download = `${filename}.png`;
+        link.href = canvas.toDataURL('image/png');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    }
+  };
+
   return (
     <div className="w-full h-full relative flex flex-col group select-none bg-white rounded-lg">
       {settings.chartTitle && (
@@ -301,6 +357,24 @@ const NyquistChart: React.FC<NyquistChartProps> = ({ datasets, settings, onUpdat
                  </button>
                </>
              )}
+
+             <div className="w-px h-4 bg-gray-200 mx-1"></div>
+             
+             <button 
+               onClick={(e) => { e.stopPropagation(); downloadChart('png'); }}
+               className="p-1.5 hover:bg-gray-100 rounded text-slate-600 transition-colors" 
+               title="Download as PNG"
+             >
+               <ImageIcon size={16} />
+             </button>
+             <button 
+               onClick={(e) => { e.stopPropagation(); downloadChart('svg'); }}
+               className="p-1.5 hover:bg-gray-100 rounded text-slate-600 transition-colors" 
+               title="Download as SVG"
+             >
+               <FileCode size={16} />
+             </button>
+
           </div>
         </div>
 
