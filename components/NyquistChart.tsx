@@ -2,7 +2,7 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { ImpedanceDataset, ChartSettings } from '../types';
-import { ZoomIn, ZoomOut, RotateCcw, Move, Image as ImageIcon, FileCode } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCcw, Move, Image as ImageIcon, FileCode, Download } from 'lucide-react';
 
 interface NyquistChartProps {
   datasets: ImpedanceDataset[];
@@ -230,6 +230,68 @@ const NyquistChart: React.FC<NyquistChartProps> = ({ datasets, settings, onUpdat
     }
   };
 
+  const exportLegendAsPng = () => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Config
+    const padding = 20;
+    const itemHeight = 24;
+    const colorBoxSize = 12;
+    const fontSize = 14;
+    const font = `${fontSize}px ui-sans-serif, system-ui, sans-serif`;
+
+    ctx.font = font;
+
+    // Calculate dimensions based on text width
+    let maxWidth = 0;
+    visibleDatasets.forEach(ds => {
+      const width = ctx.measureText(ds.name).width;
+      if (width > maxWidth) maxWidth = width;
+    });
+
+    const canvasWidth = maxWidth + colorBoxSize + padding * 3 + 50; // extra space
+    const canvasHeight = visibleDatasets.length * itemHeight + padding * 2 + 30; // items + padding + title space
+
+    // Set canvas size (2x for retina quality)
+    const scale = 2;
+    canvas.width = canvasWidth * scale;
+    canvas.height = canvasHeight * scale;
+    ctx.scale(scale, scale);
+
+    // Draw Background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+    // Draw Title
+    ctx.fillStyle = '#64748b'; // slate-500
+    ctx.font = `bold 12px ui-sans-serif, system-ui, sans-serif`;
+    ctx.fillText('LEGEND', padding, padding + 10);
+
+    // Draw Items
+    ctx.font = `500 ${fontSize}px ui-sans-serif, system-ui, sans-serif`; 
+    visibleDatasets.forEach((ds, index) => {
+      const y = padding + 35 + (index * itemHeight);
+      
+      // Color Box
+      ctx.fillStyle = ds.color;
+      ctx.fillRect(padding, y - colorBoxSize + 2, colorBoxSize, colorBoxSize); 
+
+      // Text
+      ctx.fillStyle = '#334155'; // slate-700
+      ctx.fillText(ds.name, padding + colorBoxSize + 10, y);
+    });
+
+    // Trigger Download
+    const link = document.createElement('a');
+    link.download = 'legend.png';
+    link.href = canvas.toDataURL('image/png');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="w-full h-full relative flex flex-col group select-none bg-white rounded-lg">
       {settings.chartTitle && (
@@ -389,25 +451,36 @@ const NyquistChart: React.FC<NyquistChartProps> = ({ datasets, settings, onUpdat
         </div>
       </div>
       
-      {/* Legend Overlay - Only shows VISIBLE datasets */}
-      <div className="absolute top-12 right-4 bg-white/90 backdrop-blur-sm border border-gray-200 p-2 rounded max-h-[200px] overflow-y-auto custom-scrollbar select-none z-10 shadow-md ring-1 ring-black/5">
-         <div className="text-[10px] uppercase text-slate-500 font-bold mb-1 px-1 tracking-wider">Legend</div>
-         {visibleDatasets.map(ds => (
+      {/* Legend Overlay - Resizable & Exportable */}
+      <div className="absolute top-12 right-4 bg-white/90 backdrop-blur-sm border border-gray-200 p-2 rounded max-h-[300px] overflow-auto custom-scrollbar select-none z-10 shadow-md ring-1 ring-black/5 resize min-w-[160px] flex flex-col">
+         <div className="flex justify-between items-center mb-2 pb-1 border-b border-gray-100 sticky top-0 bg-white/95">
+           <span className="text-[10px] uppercase text-slate-500 font-bold px-1 tracking-wider">Legend</span>
+           <button 
+              onClick={exportLegendAsPng} 
+              className="text-slate-400 hover:text-blue-600 transition-colors p-0.5"
+              title="Export Legend as PNG"
+            >
+              <Download size={12} />
+            </button>
+         </div>
+         <div className="space-y-1">
+          {visibleDatasets.map(ds => (
            <div 
               key={ds.id} 
               onClick={() => onUpdateDataset(ds.id, { isVisible: false })}
-              className="flex items-center gap-2 text-xs text-slate-700 mb-1 last:mb-0 cursor-pointer hover:bg-gray-100 p-1 rounded transition-all"
+              className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer hover:bg-gray-100 p-1 rounded transition-all group"
               title="Click to hide"
            >
              <div 
                 className="w-2.5 h-2.5 rounded-full flex-shrink-0 shadow-sm border border-black/10" 
                 style={{ backgroundColor: ds.color }}
              ></div>
-             <span className="truncate max-w-[120px] font-medium">
+             <span className="font-medium whitespace-nowrap">
                {ds.name}
              </span>
            </div>
-         ))}
+          ))}
+         </div>
          {visibleDatasets.length === 0 && <span className="text-xs text-slate-400 italic p-1">No data visible</span>}
       </div>
     </div>
