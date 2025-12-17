@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { ImpedanceDataset, ChartSettings, PlotMode } from '../types';
-import { Upload, FolderOpen, Download, FileUp, Trash2, Wand2, RefreshCw, Type, CheckSquare, Square, PaintBucket, Activity, Filter } from 'lucide-react';
+import { Upload, FolderOpen, Download, FileUp, Trash2, Wand2, RefreshCw, Type, CheckSquare, Square, PaintBucket, Activity, Filter, Hash } from 'lucide-react';
 
 interface SidebarProps {
   datasets: ImpedanceDataset[];
@@ -273,12 +273,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                  {settings.plotMode !== 'scatter' && (
                    <div>
                       <div className="flex justify-between text-[10px] text-slate-500 mb-1">
-                        <span>Line Width</span>
+                        <span>Data Line Thickness</span>
                         <span className="font-mono">{settings.lineWidth}px</span>
                       </div>
                       <input 
                         type="range" 
-                        min="0.5" max="6" step="0.5"
+                        min="0.5" max="10" step="0.5"
                         value={settings.lineWidth}
                         onChange={(e) => onUpdateSettings({ lineWidth: parseFloat(e.target.value) })}
                         className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
@@ -302,6 +302,131 @@ const Sidebar: React.FC<SidebarProps> = ({
                    </div>
                  )}
                </div>
+             </div>
+
+             {/* Ticks and Limits */}
+             <div className="space-y-2 bg-gray-50 border border-gray-200 p-3 rounded">
+               <div className="flex items-center gap-2 text-slate-600 text-xs mb-1">
+                 <Hash size={14} />
+                 <span className="font-bold">Axes Configuration</span>
+               </div>
+               
+               {/* Ticks Counts */}
+               <div className="grid grid-cols-2 gap-2 mb-2">
+                  <div>
+                    <label className="block text-[10px] text-slate-500 mb-0.5 font-medium">X Tick Count</label>
+                    <input 
+                      type="number" 
+                      min="2" max="20"
+                      value={settings.xTickCount ?? 5} 
+                      onChange={(e) => onUpdateSettings({ xTickCount: parseInt(e.target.value) || 5 })}
+                      className="w-full bg-white border border-gray-300 rounded px-2 py-1.5 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none text-slate-700"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-slate-500 mb-0.5 font-medium">Y Tick Count</label>
+                    <input 
+                      type="number" 
+                      min="2" max="20"
+                      value={settings.yTickCount ?? 5} 
+                      onChange={(e) => onUpdateSettings({ yTickCount: parseInt(e.target.value) || 5 })}
+                      className="w-full bg-white border border-gray-300 rounded px-2 py-1.5 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none text-slate-700"
+                    />
+                  </div>
+               </div>
+
+                {/* Tick Steps (Manual Interval) */}
+               <div className="grid grid-cols-2 gap-2 mb-2">
+                  <div>
+                    <label className="block text-[10px] text-slate-500 mb-0.5 font-medium" title="Force exact interval (overrides count)">X Tick Step (Interval)</label>
+                    <input 
+                      type="number" 
+                      min="0"
+                      step="any"
+                      value={settings.xTickStep || ''} 
+                      onChange={(e) => onUpdateSettings({ xTickStep: e.target.value ? parseFloat(e.target.value) : undefined })}
+                      placeholder="Auto"
+                      className="w-full bg-white border border-gray-300 rounded px-2 py-1.5 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none text-slate-700"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-slate-500 mb-0.5 font-medium" title="Force exact interval (overrides count)">Y Tick Step (Interval)</label>
+                    <input 
+                      type="number" 
+                      min="0"
+                      step="any"
+                      value={settings.yTickStep || ''} 
+                      onChange={(e) => onUpdateSettings({ yTickStep: e.target.value ? parseFloat(e.target.value) : undefined })}
+                      placeholder="Auto"
+                      className="w-full bg-white border border-gray-300 rounded px-2 py-1.5 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none text-slate-700"
+                    />
+                  </div>
+               </div>
+
+               {/* Axis Thickness */}
+               <div className="mb-2">
+                  <div className="flex justify-between text-[10px] text-slate-500 mb-1">
+                    <span>Axis Line Thickness</span>
+                    <span className="font-mono">{settings.axisLineWidth || 1}px</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="1" max="5" step="0.5"
+                    value={settings.axisLineWidth || 1}
+                    onChange={(e) => onUpdateSettings({ axisLineWidth: parseFloat(e.target.value) })}
+                    className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                  />
+               </div>
+
+                <div className="h-px bg-gray-200 my-2"></div>
+                
+                {/* Limits */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[10px] text-slate-500 mb-0.5 font-medium">X Max</label>
+                    <input 
+                      type="number" 
+                      value={settings.xMax || ''} 
+                      onChange={(e) => onUpdateSettings({ xMax: e.target.value ? parseFloat(e.target.value) : undefined })}
+                      placeholder="Auto"
+                      className="w-full bg-white border border-gray-300 rounded px-2 py-1.5 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none text-slate-700"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-slate-500 mb-0.5 font-medium">Y Max</label>
+                    <input 
+                      type="number" 
+                      value={settings.yMax || ''} 
+                      onChange={(e) => onUpdateSettings({ yMax: e.target.value ? parseFloat(e.target.value) : undefined })}
+                      placeholder="Auto"
+                      className="w-full bg-white border border-gray-300 rounded px-2 py-1.5 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none text-slate-700"
+                    />
+                  </div>
+               </div>
+
+                <div className="flex items-center justify-between mt-2">
+                  <label className="text-xs text-slate-600 flex items-center gap-2 cursor-pointer font-medium">
+                      <input 
+                        type="checkbox" 
+                        checked={settings.aspectRatioLocked} 
+                        onChange={(e) => onUpdateSettings({ aspectRatioLocked: e.target.checked })}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                      Isometric (1:1)
+                  </label>
+                </div>
+                
+                <div className="flex items-center justify-between mt-1">
+                  <label className="text-xs text-slate-600 flex items-center gap-2 cursor-pointer font-medium">
+                      <input 
+                        type="checkbox" 
+                        checked={settings.showGrid} 
+                        onChange={(e) => onUpdateSettings({ showGrid: e.target.checked })}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                      Show Grid
+                  </label>
+                </div>
              </div>
 
             {/* Labels Config */}
@@ -341,55 +466,6 @@ const Sidebar: React.FC<SidebarProps> = ({
               </div>
              </div>
 
-             {/* Limits */}
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-xs text-slate-500 mb-1 font-medium">X Max</label>
-                <input 
-                  type="number" 
-                  value={settings.xMax || ''} 
-                  onChange={(e) => onUpdateSettings({ xMax: e.target.value ? parseFloat(e.target.value) : undefined })}
-                  placeholder="Auto"
-                  className="w-full bg-white border border-gray-300 rounded px-2 py-1.5 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none text-slate-700"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-slate-500 mb-1 font-medium">Y Max</label>
-                <input 
-                  type="number" 
-                  value={settings.yMax || ''} 
-                  onChange={(e) => onUpdateSettings({ yMax: e.target.value ? parseFloat(e.target.value) : undefined })}
-                  placeholder="Auto"
-                  className="w-full bg-white border border-gray-300 rounded px-2 py-1.5 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none text-slate-700"
-                />
-              </div>
-            </div>
-
-            <div className="h-px bg-gray-200 my-2"></div>
-
-            <div className="flex items-center justify-between">
-               <label className="text-xs text-slate-600 flex items-center gap-2 cursor-pointer font-medium">
-                  <input 
-                    type="checkbox" 
-                    checked={settings.aspectRatioLocked} 
-                    onChange={(e) => onUpdateSettings({ aspectRatioLocked: e.target.checked })}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                  />
-                  Isometric Scale (1:1)
-               </label>
-            </div>
-            
-            <div className="flex items-center justify-between">
-               <label className="text-xs text-slate-600 flex items-center gap-2 cursor-pointer font-medium">
-                  <input 
-                    type="checkbox" 
-                    checked={settings.showGrid} 
-                    onChange={(e) => onUpdateSettings({ showGrid: e.target.checked })}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                  />
-                  Show Grid
-               </label>
-            </div>
           </div>
         </section>
       </div>

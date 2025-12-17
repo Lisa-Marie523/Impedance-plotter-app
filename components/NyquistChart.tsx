@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { ImpedanceDataset, ChartSettings } from '../types';
@@ -25,6 +24,44 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     );
   }
   return null;
+};
+
+// Superscript mapping
+const superscripts: Record<string, string> = {
+  '-': '⁻', '+': '⁺', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '.': '˙'
+};
+
+const toSuperscript = (str: string) => {
+  return str.split('').map(c => superscripts[c] || c).join('');
+};
+
+const formatTick = (val: number) => {
+  if (val === 0) return "0";
+  // Use scientific formatting for numbers that are too large or too small
+  if (Math.abs(val) >= 10000 || (Math.abs(val) < 0.01 && Math.abs(val) > 0)) {
+    const [mantissa, exponent] = val.toExponential(1).split('e');
+    // Remove + from exponent if present (e.g. +3 -> 3)
+    const cleanExponent = exponent.startsWith('+') ? exponent.substring(1) : exponent;
+    return `${mantissa}·10${toSuperscript(cleanExponent)}`;
+  }
+  // Standard decimal for moderate numbers
+  // Avoid long decimals (e.g. 0.300000004)
+  return parseFloat(val.toPrecision(4)).toString();
+};
+
+const calculateTicks = (min: number, max: number, step: number): number[] => {
+  if (step <= 0) return [];
+  const ticks: number[] = [];
+  // Find first multiple of step >= min
+  const start = Math.ceil(min / step) * step;
+  for (let t = start; t <= max; t += step) {
+    // Fix floating point errors (e.g. 0.300000000004)
+    const fixed = parseFloat(t.toPrecision(10));
+    if (fixed <= max) ticks.push(fixed);
+  }
+  // Ensure we don't have too many ticks if step is absurdly small
+  if (ticks.length > 100) return []; // safety break
+  return ticks;
 };
 
 // Custom Dot shape to control size independently
@@ -101,6 +138,22 @@ const NyquistChart: React.FC<NyquistChartProps> = ({ datasets, settings, onUpdat
 
   // 2. Determine Active Domains
   const domains = userDomains || baseDomains;
+
+  // 3. Calculate Ticks (if step is set)
+  // We memoize this to avoid recalculating on every render, but it depends on domains
+  const xTicks = useMemo(() => {
+    if (settings.xTickStep && settings.xTickStep > 0) {
+      return calculateTicks(domains.x[0], domains.x[1], settings.xTickStep);
+    }
+    return undefined; // Let Recharts decide based on tickCount
+  }, [domains.x, settings.xTickStep]);
+
+  const yTicks = useMemo(() => {
+    if (settings.yTickStep && settings.yTickStep > 0) {
+      return calculateTicks(domains.y[0], domains.y[1], settings.yTickStep);
+    }
+    return undefined; // Let Recharts decide based on tickCount
+  }, [domains.y, settings.yTickStep]);
 
   // --- Zoom & Pan Handlers ---
 
@@ -292,6 +345,12 @@ const NyquistChart: React.FC<NyquistChartProps> = ({ datasets, settings, onUpdat
     document.body.removeChild(link);
   };
 
+  // Recharts XAxis/YAxis props configuration
+  const axisStyle = {
+    stroke: '#64748b',
+    strokeWidth: settings.axisLineWidth ?? 1
+  };
+
   return (
     <div className="w-full h-full relative flex flex-col group select-none bg-white rounded-lg">
       {settings.chartTitle && (
@@ -329,9 +388,12 @@ const NyquistChart: React.FC<NyquistChartProps> = ({ datasets, settings, onUpdat
                 name="Real(Z)" 
                 domain={domains.x} 
                 allowDataOverflow={true} // Important for Zoom
-                stroke="#64748b"
+                axisLine={axisStyle}
+                tickLine={axisStyle}
+                ticks={xTicks} // Pass manual ticks if calculated
+                tickCount={settings.xTickCount} // Fallback
                 tick={{ fill: '#64748b', fontSize: 10 }}
-                tickFormatter={(val) => val.toPrecision(3)}
+                tickFormatter={formatTick}
                 label={{ 
                   value: settings.xAxisLabel, 
                   position: 'bottom', 
@@ -348,9 +410,12 @@ const NyquistChart: React.FC<NyquistChartProps> = ({ datasets, settings, onUpdat
                 name="-Imag(Z)" 
                 domain={domains.y} 
                 allowDataOverflow={true} // Important for Zoom
-                stroke="#64748b"
+                axisLine={axisStyle}
+                tickLine={axisStyle}
+                ticks={yTicks} // Pass manual ticks if calculated
+                tickCount={settings.yTickCount} // Fallback
                 tick={{ fill: '#64748b', fontSize: 10 }}
-                tickFormatter={(val) => val.toPrecision(3)}
+                tickFormatter={formatTick}
                 label={{ 
                   value: settings.yAxisLabel, 
                   angle: -90, 
@@ -365,9 +430,9 @@ const NyquistChart: React.FC<NyquistChartProps> = ({ datasets, settings, onUpdat
               
               <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3', stroke: '#94a3b8' }} />
 
-              {/* Zero Lines - slightly darker than grid */}
-              <ReferenceLine x={0} stroke="#94a3b8" />
-              <ReferenceLine y={0} stroke="#94a3b8" />
+              {/* Zero Lines - Now using the axisLineWidth */}
+              <ReferenceLine x={0} stroke="#94a3b8" strokeWidth={settings.axisLineWidth || 1} />
+              <ReferenceLine y={0} stroke="#94a3b8" strokeWidth={settings.axisLineWidth || 1} />
 
               {visibleDatasets.map(ds => {
                 // Logic for displaying Line, Symbols or Both
