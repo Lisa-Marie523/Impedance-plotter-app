@@ -140,30 +140,25 @@ const NyquistChart: React.FC<NyquistChartProps> = ({ datasets, settings, onUpdat
   const domains = userDomains || baseDomains;
 
   // 3. Calculate Ticks (if step is set)
-  // We memoize this to avoid recalculating on every render, but it depends on domains
   const xTicks = useMemo(() => {
     if (settings.xTickStep && settings.xTickStep > 0) {
       return calculateTicks(domains.x[0], domains.x[1], settings.xTickStep);
     }
-    return undefined; // Let Recharts decide based on tickCount
+    return undefined;
   }, [domains.x, settings.xTickStep]);
 
   const yTicks = useMemo(() => {
     if (settings.yTickStep && settings.yTickStep > 0) {
       return calculateTicks(domains.y[0], domains.y[1], settings.yTickStep);
     }
-    return undefined; // Let Recharts decide based on tickCount
+    return undefined;
   }, [domains.y, settings.yTickStep]);
-
-  // --- Zoom & Pan Handlers ---
 
   const applyZoom = (factor: number) => {
     const xRange = domains.x[1] - domains.x[0];
     const yRange = domains.y[1] - domains.y[0];
-    
     const newXRange = xRange * factor;
     const newYRange = yRange * factor;
-
     const xCenter = (domains.x[0] + domains.x[1]) / 2;
     const yCenter = (domains.y[0] + domains.y[1]) / 2;
 
@@ -176,16 +171,11 @@ const NyquistChart: React.FC<NyquistChartProps> = ({ datasets, settings, onUpdat
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // Scrolling down (positive delta) usually means "move down the page", 
-    // but in maps/charts it often means Zoom Out. 
-    // However, standard Google Maps: Scroll Up = Zoom In, Scroll Down = Zoom Out.
-    // deltaY > 0 is Scroll Down.
     const scaleFactor = e.deltaY > 0 ? 1.1 : 0.9;
     applyZoom(scaleFactor);
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    // Only enable pan if we are hitting the chart area, not buttons
     setIsDragging(true);
     dragStartRef.current = {
       x: e.clientX,
@@ -206,12 +196,11 @@ const NyquistChart: React.FC<NyquistChartProps> = ({ datasets, settings, onUpdat
     const { width, height } = containerRef.current.getBoundingClientRect();
     const { domains: startDomains } = dragStartRef.current;
 
-    // Calculate scale: units per pixel
     const xScale = (startDomains.x[1] - startDomains.x[0]) / width;
     const yScale = (startDomains.y[1] - startDomains.y[0]) / height;
 
     const xShift = dx * xScale; 
-    const yShift = -dy * yScale; // Inverted because screen Y is opposite to Cartesian Y
+    const yShift = -dy * yScale;
 
     setUserDomains({
       x: [startDomains.x[0] - xShift, startDomains.x[1] - xShift] as [number, number],
@@ -228,13 +217,10 @@ const NyquistChart: React.FC<NyquistChartProps> = ({ datasets, settings, onUpdat
     setUserDomains(null);
   };
 
-  // --- Image Export ---
   const downloadChart = (format: 'png' | 'svg') => {
     if (!containerRef.current) return;
-    
     const svg = containerRef.current.querySelector('svg');
     if (!svg) return;
-
     const svgData = new XMLSerializer().serializeToString(svg);
     const filename = (settings.chartTitle || 'nyquist_plot').replace(/\s+/g, '_').toLowerCase();
 
@@ -249,28 +235,20 @@ const NyquistChart: React.FC<NyquistChartProps> = ({ datasets, settings, onUpdat
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } else {
-      // PNG
       const canvas = document.createElement('canvas');
       const rect = svg.getBoundingClientRect();
-      // 2x Scale for high resolution
       const scale = 2; 
       canvas.width = rect.width * scale;
       canvas.height = rect.height * scale;
-      
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-      
       const img = new Image();
       const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
       const url = URL.createObjectURL(blob);
-      
       img.onload = () => {
-        // Draw white background (transparent by default in SVG)
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        
         const link = document.createElement('a');
         link.download = `${filename}.png`;
         link.href = canvas.toDataURL('image/png');
@@ -287,56 +265,36 @@ const NyquistChart: React.FC<NyquistChartProps> = ({ datasets, settings, onUpdat
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
-    // Config
     const padding = 20;
     const itemHeight = 24;
     const colorBoxSize = 12;
     const fontSize = 14;
     const font = `${fontSize}px ui-sans-serif, system-ui, sans-serif`;
-
     ctx.font = font;
-
-    // Calculate dimensions based on text width
     let maxWidth = 0;
     visibleDatasets.forEach(ds => {
       const width = ctx.measureText(ds.name).width;
       if (width > maxWidth) maxWidth = width;
     });
-
-    const canvasWidth = maxWidth + colorBoxSize + padding * 3 + 50; // extra space
-    const canvasHeight = visibleDatasets.length * itemHeight + padding * 2 + 30; // items + padding + title space
-
-    // Set canvas size (2x for retina quality)
+    const canvasWidth = maxWidth + colorBoxSize + padding * 3 + 50;
+    const canvasHeight = visibleDatasets.length * itemHeight + padding * 2 + 30;
     const scale = 2;
     canvas.width = canvasWidth * scale;
     canvas.height = canvasHeight * scale;
     ctx.scale(scale, scale);
-
-    // Draw Background
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-
-    // Draw Title
-    ctx.fillStyle = '#64748b'; // slate-500
+    ctx.fillStyle = '#64748b';
     ctx.font = `bold 12px ui-sans-serif, system-ui, sans-serif`;
     ctx.fillText('LEGEND', padding, padding + 10);
-
-    // Draw Items
     ctx.font = `500 ${fontSize}px ui-sans-serif, system-ui, sans-serif`; 
     visibleDatasets.forEach((ds, index) => {
       const y = padding + 35 + (index * itemHeight);
-      
-      // Color Box
       ctx.fillStyle = ds.color;
       ctx.fillRect(padding, y - colorBoxSize + 2, colorBoxSize, colorBoxSize); 
-
-      // Text
-      ctx.fillStyle = '#334155'; // slate-700
+      ctx.fillStyle = '#334155';
       ctx.fillText(ds.name, padding + colorBoxSize + 10, y);
     });
-
-    // Trigger Download
     const link = document.createElement('a');
     link.download = 'legend.png';
     link.href = canvas.toDataURL('image/png');
@@ -345,7 +303,6 @@ const NyquistChart: React.FC<NyquistChartProps> = ({ datasets, settings, onUpdat
     document.body.removeChild(link);
   };
 
-  // Recharts XAxis/YAxis props configuration
   const axisStyle = {
     stroke: '#64748b',
     strokeWidth: settings.axisLineWidth ?? 1
@@ -358,7 +315,6 @@ const NyquistChart: React.FC<NyquistChartProps> = ({ datasets, settings, onUpdat
           {settings.chartTitle}
         </div>
       )}
-      
       <div 
         ref={containerRef}
         className={`flex-1 min-h-0 relative cursor-crosshair ${isDragging ? 'cursor-grabbing' : ''}`}
@@ -381,17 +337,16 @@ const NyquistChart: React.FC<NyquistChartProps> = ({ datasets, settings, onUpdat
           <ResponsiveContainer width="100%" height="100%">
             <ScatterChart margin={{ top: 20, right: 30, bottom: 40, left: 40 }}>
               {settings.showGrid && <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />}
-              
               <XAxis 
                 type="number" 
                 dataKey="real" 
                 name="Real(Z)" 
                 domain={domains.x} 
-                allowDataOverflow={true} // Important for Zoom
+                allowDataOverflow={true}
                 axisLine={axisStyle}
                 tickLine={axisStyle}
-                ticks={xTicks} // Pass manual ticks if calculated
-                tick{{ fill: '#64748b', fontSize: 10 }}
+                ticks={xTicks}
+                tick={{ fill: '#64748b', fontSize: 10 }}
                 tickFormatter={formatTick}
                 label={{ 
                   value: settings.xAxisLabel, 
@@ -402,16 +357,15 @@ const NyquistChart: React.FC<NyquistChartProps> = ({ datasets, settings, onUpdat
                   fontWeight: 500
                 }}
               />
-              
               <YAxis 
                 type="number" 
                 dataKey="negImag" 
                 name="-Imag(Z)" 
                 domain={domains.y} 
-                allowDataOverflow={true} // Important for Zoom
+                allowDataOverflow={true}
                 axisLine={axisStyle}
                 tickLine={axisStyle}
-                ticks={yTicks} // Pass manual ticks if calculated
+                ticks={yTicks}
                 tick={{ fill: '#64748b', fontSize: 10 }}
                 tickFormatter={formatTick}
                 label={{ 
@@ -425,122 +379,58 @@ const NyquistChart: React.FC<NyquistChartProps> = ({ datasets, settings, onUpdat
                   style: { textAnchor: 'middle' }
                 }}
               />
-              
               <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3', stroke: '#94a3b8' }} />
-
-              {/* Zero Lines - Now using the axisLineWidth */}
               <ReferenceLine x={0} stroke="#94a3b8" strokeWidth={settings.axisLineWidth || 1} />
               <ReferenceLine y={0} stroke="#94a3b8" strokeWidth={settings.axisLineWidth || 1} />
-
               {visibleDatasets.map(ds => {
-                // Logic for displaying Line, Symbols or Both
                 const showLine = settings.plotMode !== 'scatter';
                 const showSymbols = settings.plotMode !== 'line';
-
                 return (
                   <Scatter 
                     key={ds.id} 
                     name={ds.name} 
                     data={ds.data} 
                     fill={ds.color} 
-                    // Line configuration
                     line={showLine ? { stroke: ds.color, strokeWidth: settings.lineWidth } : false}
-                    // Symbol configuration
                     shape={showSymbols ? (props: any) => <CustomSymbol {...props} size={settings.symbolSize} /> : () => null}
-                    isAnimationActive={false} // Better performance when zooming
+                    isAnimationActive={false}
                   />
                 );
               })}
             </ScatterChart>
           </ResponsiveContainer>
         )}
-
-        {/* Interaction Hints & Controls */}
         <div className="absolute bottom-4 right-4 flex gap-2">
           <div className="flex gap-1 pointer-events-auto bg-white/95 backdrop-blur rounded-lg border border-gray-200 shadow-lg p-1 ring-1 ring-black/5 items-center z-20">
-             <button 
-               onClick={(e) => { e.stopPropagation(); applyZoom(0.8); }}
-               className="p-1.5 hover:bg-gray-100 rounded text-slate-600 transition-colors" 
-               title="Zoom In"
-             >
-               <ZoomIn size={16} />
-             </button>
-             <button 
-               onClick={(e) => { e.stopPropagation(); applyZoom(1.25); }}
-               className="p-1.5 hover:bg-gray-100 rounded text-slate-600 transition-colors" 
-               title="Zoom Out"
-             >
-               <ZoomOut size={16} />
-             </button>
-             
+             <button onClick={(e) => { e.stopPropagation(); applyZoom(0.8); }} className="p-1.5 hover:bg-gray-100 rounded text-slate-600 transition-colors" title="Zoom In"><ZoomIn size={16} /></button>
+             <button onClick={(e) => { e.stopPropagation(); applyZoom(1.25); }} className="p-1.5 hover:bg-gray-100 rounded text-slate-600 transition-colors" title="Zoom Out"><ZoomOut size={16} /></button>
              {userDomains && (
                <>
                  <div className="w-px h-4 bg-gray-200 mx-1"></div>
-                 <button 
-                   onClick={(e) => { e.stopPropagation(); resetZoom(); }}
-                   className="p-1.5 hover:bg-gray-100 rounded text-blue-600 transition-colors" 
-                   title="Reset View"
-                 >
-                   <RotateCcw size={16} />
-                 </button>
+                 <button onClick={(e) => { e.stopPropagation(); resetZoom(); }} className="p-1.5 hover:bg-gray-100 rounded text-blue-600 transition-colors" title="Reset View"><RotateCcw size={16} /></button>
                </>
              )}
-
              <div className="w-px h-4 bg-gray-200 mx-1"></div>
-             
-             <button 
-               onClick={(e) => { e.stopPropagation(); downloadChart('png'); }}
-               className="p-1.5 hover:bg-gray-100 rounded text-slate-600 transition-colors" 
-               title="Download as PNG"
-             >
-               <ImageIcon size={16} />
-             </button>
-             <button 
-               onClick={(e) => { e.stopPropagation(); downloadChart('svg'); }}
-               className="p-1.5 hover:bg-gray-100 rounded text-slate-600 transition-colors" 
-               title="Download as SVG"
-             >
-               <FileCode size={16} />
-             </button>
-
+             <button onClick={(e) => { e.stopPropagation(); downloadChart('png'); }} className="p-1.5 hover:bg-gray-100 rounded text-slate-600 transition-colors" title="Download as PNG"><ImageIcon size={16} /></button>
+             <button onClick={(e) => { e.stopPropagation(); downloadChart('svg'); }} className="p-1.5 hover:bg-gray-100 rounded text-slate-600 transition-colors" title="Download as SVG"><FileCode size={16} /></button>
           </div>
         </div>
-
-        {/* Help Text overlay */}
         <div className="absolute top-2 left-4 text-[10px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-white/80 p-1 rounded backdrop-blur-sm z-10">
            <div className="flex items-center gap-1"><Move size={10}/> Drag to Pan</div>
            <div className="flex items-center gap-1"><ZoomIn size={10}/> Scroll to Zoom</div>
            <div className="flex items-center gap-1"><RotateCcw size={10}/> Double-click Reset</div>
         </div>
       </div>
-      
-      {/* Legend Overlay - Resizable & Exportable */}
       <div className="absolute top-12 right-4 bg-white/90 backdrop-blur-sm border border-gray-200 p-2 rounded max-h-[300px] overflow-auto custom-scrollbar select-none z-10 shadow-md ring-1 ring-black/5 resize min-w-[160px] flex flex-col">
          <div className="flex justify-between items-center mb-2 pb-1 border-b border-gray-100 sticky top-0 bg-white/95">
            <span className="text-[10px] uppercase text-slate-500 font-bold px-1 tracking-wider">Legend</span>
-           <button 
-              onClick={exportLegendAsPng} 
-              className="text-slate-400 hover:text-blue-600 transition-colors p-0.5"
-              title="Export Legend as PNG"
-            >
-              <Download size={12} />
-            </button>
+           <button onClick={exportLegendAsPng} className="text-slate-400 hover:text-blue-600 transition-colors p-0.5" title="Export Legend as PNG"><Download size={12} /></button>
          </div>
          <div className="space-y-1">
           {visibleDatasets.map(ds => (
-           <div 
-              key={ds.id} 
-              onClick={() => onUpdateDataset(ds.id, { isVisible: false })}
-              className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer hover:bg-gray-100 p-1 rounded transition-all group"
-              title="Click to hide"
-           >
-             <div 
-                className="w-2.5 h-2.5 rounded-full flex-shrink-0 shadow-sm border border-black/10" 
-                style={{ backgroundColor: ds.color }}
-             ></div>
-             <span className="font-medium whitespace-nowrap">
-               {ds.name}
-             </span>
+           <div key={ds.id} onClick={() => onUpdateDataset(ds.id, { isVisible: false })} className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer hover:bg-gray-100 p-1 rounded transition-all group" title="Click to hide">
+             <div className="w-2.5 h-2.5 rounded-full flex-shrink-0 shadow-sm border border-black/10" style={{ backgroundColor: ds.color }}></div>
+             <span className="font-medium whitespace-nowrap">{ds.name}</span>
            </div>
           ))}
          </div>
