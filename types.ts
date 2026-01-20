@@ -32,8 +32,6 @@ export interface ChartSettings {
   lineWidth: number;
   symbolSize: number;
   // Axis Configuration
-  xTickCount: number;
-  yTickCount: number;
   axisLineWidth: number; // Thickness of axis lines AND zero reference lines
   xTickStep: number | undefined; // Manual step size for X ticks
   yTickStep: number | undefined; // Manual step size for Y ticks

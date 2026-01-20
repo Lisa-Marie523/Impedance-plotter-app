@@ -20,8 +20,6 @@ const DEFAULT_SETTINGS: ChartSettings = {
   plotMode: 'both',
   lineWidth: 2,
   symbolSize: 3,
-  xTickCount: 5,
-  yTickCount: 5,
   axisLineWidth: 1, 
   xTickStep: undefined,
   yTickStep: undefined,

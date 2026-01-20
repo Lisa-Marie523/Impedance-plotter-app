@@ -391,8 +391,7 @@ const NyquistChart: React.FC<NyquistChartProps> = ({ datasets, settings, onUpdat
                 axisLine={axisStyle}
                 tickLine={axisStyle}
                 ticks={xTicks} // Pass manual ticks if calculated
-                tickCount={settings.xTickCount} // Fallback
-                tick={{ fill: '#64748b', fontSize: 10 }}
+                tick{{ fill: '#64748b', fontSize: 10 }}
                 tickFormatter={formatTick}
                 label={{ 
                   value: settings.xAxisLabel, 
@@ -413,7 +412,6 @@ const NyquistChart: React.FC<NyquistChartProps> = ({ datasets, settings, onUpdat
                 axisLine={axisStyle}
                 tickLine={axisStyle}
                 ticks={yTicks} // Pass manual ticks if calculated
-                tickCount={settings.yTickCount} // Fallback
                 tick={{ fill: '#64748b', fontSize: 10 }}
                 tickFormatter={formatTick}
                 label={{ 

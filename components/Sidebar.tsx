@@ -311,34 +311,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                  <span className="font-bold">Axes Configuration</span>
                </div>
                
-               {/* Ticks Counts */}
+               {/* Tick Steps (Manual Interval) */}
                <div className="grid grid-cols-2 gap-2 mb-2">
                   <div>
-                    <label className="block text-[10px] text-slate-500 mb-0.5 font-medium">X Tick Count</label>
-                    <input 
-                      type="number" 
-                      min="2" max="20"
-                      value={settings.xTickCount ?? 5} 
-                      onChange={(e) => onUpdateSettings({ xTickCount: parseInt(e.target.value) || 5 })}
-                      className="w-full bg-white border border-gray-300 rounded px-2 py-1.5 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none text-slate-700"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-slate-500 mb-0.5 font-medium">Y Tick Count</label>
-                    <input 
-                      type="number" 
-                      min="2" max="20"
-                      value={settings.yTickCount ?? 5} 
-                      onChange={(e) => onUpdateSettings({ yTickCount: parseInt(e.target.value) || 5 })}
-                      className="w-full bg-white border border-gray-300 rounded px-2 py-1.5 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none text-slate-700"
-                    />
-                  </div>
-               </div>
-
-                {/* Tick Steps (Manual Interval) */}
-               <div className="grid grid-cols-2 gap-2 mb-2">
-                  <div>
-                    <label className="block text-[10px] text-slate-500 mb-0.5 font-medium" title="Force exact interval (overrides count)">X Tick Step (Interval)</label>
+                    <label className="block text-[10px] text-slate-500 mb-0.5 font-medium" title="Force exact interval">X Tick Step (Interval)</label>
                     <input 
                       type="number" 
                       min="0"
@@ -350,7 +326,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-slate-500 mb-0.5 font-medium" title="Force exact interval (overrides count)">Y Tick Step (Interval)</label>
+                    <label className="block text-[10px] text-slate-500 mb-0.5 font-medium" title="Force exact interval">Y Tick Step (Interval)</label>
                     <input 
                       type="number" 
                       min="0"
